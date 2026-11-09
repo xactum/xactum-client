@@ -1,0 +1,30 @@
+{
+    "name": "@xactum/client",
+    "version": "0.1.0",
+    "description": "Open-source client and MCP server for XACTUM: neutral, pay-per-query verification of LLM prices and served models (x402, USDC on Base). Verifies, never routes.",
+    "license": "MIT",
+    "author": "XACTUM",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "bin": { "xactum-mcp": "dist/mcp.js" },
+    "files": ["dist", "README.md", "LICENSE"],
+    "scripts": {
+          "build": "tsc -p .",
+          "check": "tsc -p . --noEmit"
+    },
+    "keywords": ["x402", "mcp", "llm", "verification", "price-check", "agents", "oracle"],
+    "repository": { "type": "git", "url": "https://github.com/xactum/xactum-client" },
+    "engines": { "node": ">=20" },
+    "dependencies": {
+          "@modelcontextprotocol/sdk": "^1.32.2",
+          "@x402/evm": "^2.30.0",
+          "@x402/fetch": "^2.30.0",
+          "viem": "^2.57.0",
+          "zod": "^3.25.0"
+    },
+    "devDependencies": {
+          "@types/node": "^22.0.0",
+          "typescript": "^5.6.0"
+    }
+}
