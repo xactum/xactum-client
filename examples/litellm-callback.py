@@ -56,10 +56,14 @@ class XactumClient:
         self.address = account.address
 
     async def _terms(self) -> dict:
-        async with httpx.AsyncClient(timeout=10) as http:
-            r = await http.get(f"{self.base_url}/terms")
+        # Terms id/hash come from the service root ("/"), which returns
+        # {"terms": {"id", "sha256", "url"}} as JSON. "/terms" is the
+        # human-readable legal text, not a machine-readable endpoint.
+        async with httpx.AsyncClient(timeout=10, follow_redirects=True) as http:
+            r = await http.get(f"{self.base_url}/")
             r.raise_for_status()
-            return r.json()
+            info = r.json()
+            return info["terms"]
 
     async def _post(self, path: str, body: dict) -> dict:
         terms = await self._terms()
@@ -71,7 +75,10 @@ class XactumClient:
         async with x402HttpxClient(self._payment_client, timeout=15) as http:
             r = await http.post(f"{self.base_url}{path}", json=body)
             await r.aread()
-            return r.json()
+            payload = r.json()
+            if r.status_code >= 400:
+                raise RuntimeError(f"XACTUM {path} -> HTTP {r.status_code}: {payload}")
+            return payload
 
     async def verify_price(self, model_id: str, input_per_mtok: Optional[float] = None,
                             output_per_mtok: Optional[float] = None, tier: Optional[str] = None) -> dict:
@@ -82,7 +89,7 @@ class XactumClient:
             query["outputPerMTok"] = output_per_mtok
         if tier is not None:
             query["tier"] = tier
-        return await self._post("/verify/price", {"query": query})
+        return await self._post("/v1/verify/price", {"query": query})
 
     async def verify_model(self, model_id: str, gateway: str, observed_at: str,
                             model_field_returned: Optional[str] = None, latency_ms: Optional[int] = None) -> dict:
@@ -91,7 +98,7 @@ class XactumClient:
             sample["modelFieldReturned"] = model_field_returned
         if latency_ms is not None:
             sample["latencyMs"] = latency_ms
-        return await self._post("/verify/model", {"sample": sample})
+        return await self._post("/v1/verify/model", {"sample": sample})
 
 
 class XactumVerificationCallback(CustomLogger):
